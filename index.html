@@ -11,7 +11,8 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  
   <style>
     /* ============ Global Styles ============ */
     body, h1, h2, h3, h4, h5, h6, p, label, input, select, button, a {
@@ -24,7 +25,6 @@
       background-color: #f8f9fa;
       padding-top: 70px; /* For Fixed Navbar */
     }
-
     /* ============ Navbar ============ */
     .navbar {
       background-color: #dc3545;
@@ -38,29 +38,28 @@
       align-items: center;
     }
     .navbar-brand small {
-      font-size: 1rem; /* ছোট ফন্ট সাইজ */
-      margin-left: 5px; /* কিছুটা ফাঁকা রাখতে */
-      color: #6c757d; /* হালকা ধূসর রঙ */
+      font-size: 1rem;
+      margin-left: 5px;
+      color: #6c757d;
     }
-    /* সার্চ আইকন বাটন (Navbar এর ডান পাশে) */
-    #searchIconBtn {
+    /* Search & Logout Icon Buttons */
+    #searchIconBtn, #logoutIconBtn {
       background: none;
       border: none;
       color: #fff;
       font-size: 1.5rem;
       cursor: pointer;
+      margin-left: 10px;
     }
-
     /* ============ Add Task & Search Box Container ============ */
     .action-container {
       display: flex;
       justify-content: flex-end;
       align-items: center;
       gap: 10px;
-      margin-top: 2rem; /* Navbar থেকে আরও নিচে সরানো */
+      margin-top: 2rem;
       margin-bottom: 2rem;
     }
-    /* সার্চ বক্স স্টাইল এবং এনিমেশন */
     .search-box {
       width: 0;
       opacity: 0;
@@ -68,10 +67,9 @@
       overflow: hidden;
     }
     .search-box.active {
-      width: 200px; /* প্রয়োজন অনুযায়ী সমন্বয় করা যাবে */
+      width: 200px;
       opacity: 1;
     }
-
     /* ============ Card Styles ============ */
     .card {
       background-color: #fff;
@@ -85,13 +83,13 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .card-header {
-      background-color: #b3d7ff; /* Darker Light Blue */
+      background-color: #b3d7ff;
       padding: 0.5rem 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #80bfff; /* Slightly darker blue border */
-      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Light shadow for highlighting */
+      border-bottom: 1px solid #80bfff;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     }
     .card-header h5 {
       margin: 0;
@@ -111,23 +109,13 @@
     .dot-btn:hover {
       color: #dc3545;
     }
-
-    /* ============ Priority & Status ============ */
-    .priority-line {
+    .priority-line, .status-line {
       display: flex;
       align-items: center;
       margin-bottom: 0.5rem;
     }
-    .priority-line small {
+    .priority-line small, .status-line small {
       margin-right: 5px;
-    }
-    .status-line {
-      display: flex;           /* পাশাপাশি রাখতে flex ব্যবহার */
-      align-items: center;     /* উল্লম্বভাবে সেন্টার */
-      margin-bottom: 0.5rem;
-    }
-    .status-line small {
-      margin-right: 5px;       /* Status: এর পর সামান্য গ্যাপ */
     }
     .task-progress {
       min-width: 150px;
@@ -135,11 +123,8 @@
     }
     .progress-text {
       font-size: 1.2rem;
-      text-align: bi-chat-left-text;
       margin-top: 0.3rem;
     }
-
-    /* ============ Comments Section ============ */
     .show-more {
       color: #007bff;
       text-decoration: underline;
@@ -170,8 +155,6 @@
       margin-top: 0.2rem;
       font-size: 1.5rem;
     }
-
-    /* ============ Modal & Toast ============ */
     .modal-content {
       background-color: #fff;
       border: 1px solid #dc3545;
@@ -190,39 +173,102 @@
       right: 1rem;
       z-index: 1055;
     }
+    /* ============ Authentication Styles ============ */
+    #auth-section {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(248, 249, 250, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1100;
+    }
+    .auth-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 350px;
+      text-align: center;
+    }
+    .auth-container h2 {
+      margin-bottom: 20px;
+    }
+    .auth-container input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .auth-container button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      background: #28a745;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      margin-bottom: 10px;
+    }
+    .auth-container button:hover {
+      background: #218838;
+    }
+    .toggle-auth {
+      color: #007bff;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <!-- ============ Fixed Navbar ============ -->
+  <!-- Authentication Section -->
+  <div id="auth-section">
+    <div class="auth-container">
+      <h2 id="auth-title">লগইন করুন</h2>
+      <!-- নাম ইনপুট: শুধুমাত্র সাইনআপ মোডে দেখানো হবে -->
+      <input type="text" id="auth-name" placeholder="নাম" style="display:none;" />
+      <input type="email" id="auth-email" placeholder="ইমেইল" />
+      <input type="password" id="auth-password" placeholder="পাসওয়ার্ড" />
+      <button id="auth-btn">লগইন</button>
+      <p class="toggle-auth" onclick="toggleAuthMode()">অ্যাকাউন্ট না থাকলে সাইনআপ করুন</p>
+    </div>
+  </div>
+
+  <!-- Fixed Navbar -->
   <nav class="navbar">
     <span class="navbar-brand">
       <i class="bi bi-card-checklist"></i> FLOW UP 
       <small class="text-muted"> by zubayer</small>
     </span>
-    <!-- টপ বার সার্চ আইকন -->
-    <button id="searchIconBtn">
-      <i class="bi bi-search"></i>
-    </button>
+    <div>
+      <button id="searchIconBtn">
+        <i class="bi bi-search"></i>
+      </button>
+      <button id="logoutIconBtn" style="display:none;">
+        <i class="bi bi-box-arrow-right"></i>
+      </button>
+    </div>
   </nav>
 
-  <!-- ============ Main Container ============ -->
-  <div class="container mb-4">
-    <!-- Add Task & Search Box Container -->
+  <!-- Main Container (Visible after login) -->
+  <div id="app-section" class="container mb-4" style="display:none;">
     <div class="action-container">
       <input type="text" id="searchBox" class="form-control search-box" placeholder="সার্চ করুন..." />
       <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#addTaskModal">
         <i class="bi bi-plus-circle-fill"></i> Add Task
       </button>
     </div>
-
-    <!-- Task List -->
     <div id="taskContainer"></div>
   </div>
 
-  <!-- ============ Toast Container ============ -->
+  <!-- Toast Container -->
   <div id="toastContainer"></div>
 
-  <!-- ============ Add Task Modal ============ -->
+  <!-- Add Task Modal -->
   <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -258,7 +304,7 @@
     </div>
   </div>
 
-  <!-- ============ Edit Task Modal ============ -->
+  <!-- Edit Task Modal -->
   <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -299,7 +345,7 @@
     </div>
   </div>
 
-  <!-- ============ Delete Confirmation Modal ============ -->
+  <!-- Delete Confirmation Modal -->
   <div class="modal fade" id="deleteTaskModal" tabindex="-1" aria-labelledby="deleteTaskModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -320,11 +366,11 @@
     </div>
   </div>
 
-  <!-- ============ Bootstrap Bundle JS ============ -->
+  <!-- Bootstrap Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    /* ================= Firebase Config & Init ================= */
+    /* ================= Firebase Config & Initialization ================= */
     const firebaseConfig = {
       apiKey: "AIzaSyAlCr-cphqHaAGN8SoDJ_aOnVBzJOyFLyo",
       authDomain: "post-41a7c.firebaseapp.com",
@@ -336,60 +382,73 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
     /* ================= Global Variables ================= */
     let tasks = [];
     let selectedTaskId = null;
+    // Auth mode: true for login, false for signup
+    let isLoginMode = true;
+    // Store logged in user's display name and role
+    let currentUserName = '';
+    let currentUserRole = 'user'; // Default role
 
     /* ================= DOM Elements ================= */
+    const authSection = document.getElementById('auth-section');
+    const authTitle = document.getElementById('auth-title');
+    const authBtn = document.getElementById('auth-btn');
+    const authName = document.getElementById('auth-name');
+    const authEmail = document.getElementById('auth-email');
+    const authPassword = document.getElementById('auth-password');
+
+    const appSection = document.getElementById('app-section');
     const taskContainer = document.getElementById('taskContainer');
-    // Add Task Modal
+    const searchBox = document.getElementById('searchBox');
+    const searchIconBtn = document.getElementById('searchIconBtn');
+    const logoutIconBtn = document.getElementById('logoutIconBtn');
+
+    // Add Task Modal Elements
     const newTaskNameEl = document.getElementById('newTaskName');
     const newTaskPriorityEl = document.getElementById('newTaskPriority');
     const newTaskProgressEl = document.getElementById('newTaskProgress');
     const saveNewTaskBtn = document.getElementById('saveNewTaskBtn');
     const addTaskModal = new bootstrap.Modal(document.getElementById('addTaskModal'));
-    // Edit Task Modal
+
+    // Edit Task Modal Elements
     const editTaskNameEl = document.getElementById('editTaskName');
     const editTaskPriorityEl = document.getElementById('editTaskPriority');
     const editTaskProgressEl = document.getElementById('editTaskProgress');
     const saveEditTaskBtn = document.getElementById('saveEditTaskBtn');
     const editTaskModal = new bootstrap.Modal(document.getElementById('editTaskModal'));
-    // Delete Modal
+
+    // Delete Modal Elements
     const deleteTaskModal = new bootstrap.Modal(document.getElementById('deleteTaskModal'));
     const confirmDeleteTaskBtn = document.getElementById('confirmDeleteTaskBtn');
+
     // Toast Container
     const toastContainer = document.getElementById('toastContainer');
-    // Search Box & Icon Button
-    const searchBox = document.getElementById('searchBox');
-    const searchIconBtn = document.getElementById('searchIconBtn');
 
     /* ================= Utility Functions ================= */
-    // Date Formatting: DD-MM-YYYY, HH:MM
     function formatTimestamp(ts) {
-  if (!ts) return '';
-  const date = ts.toDate();
-  const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const yyyy = date.getFullYear();
-  let hours = date.getHours();
-  const min = String(date.getMinutes()).padStart(2, '0');
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12;
-  hours = hours ? hours : 12; // 0 সময় হলে 12 দেখাবে
-  const formattedHours = String(hours).padStart(2, '0');
-  return `${dd}-${mm}-${yyyy}, ${formattedHours}:${min} ${ampm}`;
-}
-
-    // Progress Title
+      if (!ts) return '';
+      const date = ts.toDate();
+      const dd = String(date.getDate()).padStart(2, '0');
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const yyyy = date.getFullYear();
+      let hours = date.getHours();
+      const min = String(date.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const formattedHours = String(hours).padStart(2, '0');
+      return `${dd}-${mm}-${yyyy}, ${formattedHours}:${min} ${ampm}`;
+    }
     function getProgressTitle(progress) {
       if (progress === 0) return "Not Started 😴";
       else if (progress > 0 && progress < 100) return "In Progress ⏳";
       else if (progress === 100) return "Completed ✅";
       else return "";
     }
-
-    // Show Toast Message
     function showToast(message) {
       const toastEl = document.createElement('div');
       toastEl.className = 'toast align-items-center toast-dark-bg border-0 show';
@@ -410,8 +469,110 @@
       }, 3000);
     }
 
+    /* ================= Firebase Authentication ================= */
+    // Toggle between Login and Signup mode
+    function toggleAuthMode() {
+      isLoginMode = !isLoginMode;
+      if (isLoginMode) {
+        authTitle.innerText = "লগইন করুন";
+        authBtn.innerText = "লগইন";
+        document.querySelector('.toggle-auth').innerText = "অ্যাকাউন্ট না থাকলে সাইনআপ করুন";
+        authName.style.display = "none";
+      } else {
+        authTitle.innerText = "সাইনআপ করুন";
+        authBtn.innerText = "সাইনআপ";
+        document.querySelector('.toggle-auth').innerText = "অ্যাকাউন্ট আছে? লগইন করুন";
+        authName.style.display = "block";
+      }
+    }
+    // Auth Button Click Handler
+    authBtn.addEventListener('click', () => {
+      const email = authEmail.value.trim();
+      const password = authPassword.value.trim();
+      if (!email || !password) {
+        showToast("ইমেইল ও পাসওয়ার্ড প্রদান করুন!");
+        return;
+      }
+      if (isLoginMode) {
+        auth.signInWithEmailAndPassword(email, password)
+          .then(() => {
+            console.log("লগইন সফল");
+          })
+          .catch(error => {
+            showToast("লগইন ত্রুটি: " + error.message);
+          });
+      } else {
+        const name = authName.value.trim();
+        if (!name) {
+          showToast("নাম প্রদান করুন!");
+          return;
+        }
+        auth.createUserWithEmailAndPassword(email, password)
+          .then((userCredential) => {
+            const user = userCredential.user;
+            // Firebase Auth প্রোফাইলে নাম আপডেট করুন
+            return user.updateProfile({ displayName: name }).then(() => {
+              // Firestore-এ ডিফল্টভাবে role: "user" এবং নাম সংরক্ষণ করুন
+              return db.collection("users").doc(user.uid).set({
+                name: name,
+                email: email,
+                role: "user"
+              });
+            });
+          })
+          .then(() => {
+            console.log("সাইনআপ সফল, নাম ও রোল সংরক্ষিত");
+          })
+          .catch(error => {
+            showToast("সাইনআপ ত্রুটি: " + error.message);
+          });
+      }
+    });
+
+    // Listen for Auth State Changes
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        // Firestore থেকে ইউজারের তথ্য নিয়ে currentUserName ও currentUserRole আপডেট করুন
+        db.collection("users").doc(user.uid).get()
+          .then(doc => {
+            if (doc.exists) {
+              const data = doc.data();
+              currentUserName = user.displayName || data.name || "anonymous";
+              currentUserRole = data.role || "user";
+              console.log("ইউজার তথ্য:", data);
+            }
+            // Auth Section লুকিয়ে main app দেখান
+            authSection.style.display = "none";
+            appSection.style.display = "block";
+            logoutIconBtn.style.display = "inline-block";
+          })
+          .catch(err => {
+            console.error("তথ্য লোড করতে সমস্যা:", err);
+          });
+      } else {
+        authSection.style.display = "flex";
+        appSection.style.display = "none";
+        logoutIconBtn.style.display = "none";
+      }
+    });
+
+    function logout() {
+      auth.signOut().then(() => {
+        console.log("লগআউট সফল");
+      });
+    }
+    logoutIconBtn.addEventListener('click', logout);
+
+    /* ================= Role Based Access Check ================= */
+    function requireAdmin(actionName) {
+      if (currentUserRole !== 'admin') {
+        showToast(`Access Denied! শুধুমাত্র এডমিন ${actionName} করতে পারবেন।`);
+        return false;
+      }
+      return true;
+    }
+
     /* ================= Firestore Data Load & Render ================= */
-    // Real-time snapshot listener
     function loadTasks() {
       db.collection('tasks')
         .orderBy('timestamp', 'desc')
@@ -425,26 +586,20 @@
           renderTasks();
         });
     }
-
-    // Render Task Cards with Dynamic Search Filter
     function renderTasks() {
       taskContainer.innerHTML = '';
-      // Apply search filter if any
       let filteredTasks = tasks;
       const query = searchBox.value.trim().toLowerCase();
       if (query) {
         filteredTasks = tasks.filter(task => task.name.toLowerCase().includes(query));
       }
       filteredTasks.forEach(task => {
-        // Prepare Data
         const createdAt = task.timestamp ? formatTimestamp(task.timestamp) : "N/A";
         const progressUpdated = task.progressTimestamp ? formatTimestamp(task.progressTimestamp) : "N/A";
         const taskNameClass = (task.progress === 100) ? 'text-decoration-line-through' : '';
 
-        // Build Comments HTML
         let commentsHtml = '';
         if (task.comments && task.comments.length > 0) {
-          // Sort comments by timestamp ascending
           task.comments.sort((a, b) => {
             if (!a.timestamp || !b.timestamp) return 0;
             return a.timestamp.seconds - b.timestamp.seconds;
@@ -452,33 +607,26 @@
           task.comments.forEach(cmt => {
             commentsHtml += `
               <div class="comment">
-                <div class="comment-author">anonymous</div>
-                <div class="comment-timestamp">
-                  ${cmt.timestamp ? formatTimestamp(cmt.timestamp) : ''}
-                </div>
+                <div class="comment-author">${cmt.name || "anonymous"}</div>
+                <div class="comment-timestamp">${cmt.timestamp ? formatTimestamp(cmt.timestamp) : ''}</div>
                 <div class="comment-text">${cmt.comment}</div>
               </div>
             `;
           });
         }
-
-        // Create Card
         const card = document.createElement('div');
         card.className = 'card shadow';
         card.innerHTML = `
           <div class="card-header">
             <div>
               <h5 class="${taskNameClass} mb-0">${task.name}</h5>
-              <small class="timestamp">
-                <i class="bi bi-clock-history"></i> Created: ${createdAt}
-              </small>
+              <small class="timestamp"><i class="bi bi-clock-history"></i> Created: ${createdAt}</small>
             </div>
             <button class="dot-btn" onclick="openEditModal('${task.id}')">
               <i class="bi bi-three-dots-vertical"></i>
             </button>
           </div>
           <div class="card-body">
-            <!-- Priority Line -->
             <div class="priority-line">
               <small>Priority:</small>
               <span class="ms-1 badge ${
@@ -491,7 +639,6 @@
                 ${task.priority.toUpperCase()}
               </span>
             </div>
-            <!-- Status Line + Progress Bar Side by Side -->
             <div class="status-line">
               <small>Status:</small>
               <div class="task-progress ms-2" ondblclick="onUpdateTaskProgress('${task.id}')">
@@ -506,12 +653,9 @@
                   </div>
                 </div>
                 <p class="progress-text mb-1">${getProgressTitle(task.progress)}</p>
-                <small class="progress-timestamp">
-                  <i class="bi bi-clock"></i> Last Updated: ${progressUpdated}
-                </small>
+                <small class="progress-timestamp"><i class="bi bi-clock"></i> Last Updated: ${progressUpdated}</small>
               </div>
             </div>
-            <!-- Show More / Comments -->
             <a class="show-more" onclick="toggleCommentSection(this)">
               <i class="bi bi-chat-left-text"></i> Show More
             </a>
@@ -528,13 +672,11 @@
         taskContainer.appendChild(card);
       });
     }
-
-    // Listen for search input changes for dynamic filtering
     searchBox.addEventListener('input', renderTasks);
 
-    /* ================= Task CRUD Operations ================= */
-    // Add Task
+    /* ================= Task CRUD Operations (Admin Only) ================= */
     saveNewTaskBtn.addEventListener('click', () => {
+      if (!requireAdmin("যোগ করতে")) return;
       const name = newTaskNameEl.value.trim();
       if (name === '') {
         showToast("টাস্কের নাম লিখুন!");
@@ -542,7 +684,6 @@
       }
       const priority = newTaskPriorityEl.value;
       const progress = parseInt(newTaskProgressEl.value) || 0;
-
       db.collection('tasks').add({
         name,
         priority,
@@ -562,9 +703,8 @@
         showToast("যোগ করতে সমস্যা হয়েছে!");
       });
     });
-
-    // Open Edit Modal
     function openEditModal(taskId) {
+      if (!requireAdmin("এডিট করতে")) return;
       selectedTaskId = taskId;
       const task = tasks.find(t => t.id === taskId);
       if (task) {
@@ -575,9 +715,8 @@
       }
     }
     window.openEditModal = openEditModal;
-
-    // Save Edited Task
     saveEditTaskBtn.addEventListener('click', () => {
+      if (!requireAdmin("এডিট করতে")) return;
       const name = editTaskNameEl.value.trim();
       if (name === '') {
         showToast("টাস্কের নাম লিখুন!");
@@ -585,7 +724,6 @@
       }
       const priority = editTaskPriorityEl.value;
       const progress = parseInt(editTaskProgressEl.value) || 0;
-
       db.collection('tasks').doc(selectedTaskId).update({
         name,
         priority,
@@ -601,9 +739,8 @@
         showToast("এডিট করতে সমস্যা হয়েছে!");
       });
     });
-
-    // Update Progress on double-click
     function onUpdateTaskProgress(taskId) {
+      if (!requireAdmin("প্রগ্রেস আপডেট করতে")) return;
       const task = tasks.find(t => t.id === taskId);
       if (task) {
         const newProgress = prompt("নতুন প্রগ্রেস (%) লিখুন (0-100):", task.progress);
@@ -628,15 +765,14 @@
       }
     }
     window.onUpdateTaskProgress = onUpdateTaskProgress;
-
-    // Delete Task
     function openDeleteModal(taskId) {
+      if (!requireAdmin("ডিলিট করতে")) return;
       selectedTaskId = taskId;
       deleteTaskModal.show();
     }
     window.openDeleteModal = openDeleteModal;
-
     confirmDeleteTaskBtn.addEventListener('click', () => {
+      if (!requireAdmin("ডিলিট করতে")) return;
       db.collection('tasks').doc(selectedTaskId).delete()
         .then(() => {
           showToast("টাস্ক ডিলিট হয়েছে!");
@@ -647,9 +783,8 @@
           showToast("ডিলিট করতে সমস্যা হয়েছে!");
         });
     });
-
-    // Submit Comment (Fix for serverTimestamp in arrayUnion)
     function submitComment(taskId, btn) {
+      if (!requireAdmin("কমেন্ট যোগ করতে")) return;
       const inputGroup = btn.parentElement;
       const commentInput = inputGroup.querySelector('.comment-input');
       const commentText = commentInput.value.trim();
@@ -657,12 +792,10 @@
         showToast("কমেন্ট লিখুন!");
         return;
       }
-      // FieldValue.serverTimestamp() arrayUnion এ সরাসরি যায় না
-      // তাই firebase.firestore.Timestamp.now() ব্যবহার করা হচ্ছে
       const commentObj = {
-        name: "anonymous",
+        name: currentUserName || "anonymous",
         comment: commentText,
-        timestamp: firebase.firestore.Timestamp.now() // <-- Fix here
+        timestamp: firebase.firestore.Timestamp.now()
       };
       db.collection('tasks').doc(taskId).update({
         comments: firebase.firestore.FieldValue.arrayUnion(commentObj)
@@ -677,8 +810,6 @@
       });
     }
     window.submitComment = submitComment;
-
-    // Toggle Comment Section
     function toggleCommentSection(linkEl) {
       const commentSection = linkEl.nextElementSibling;
       if (commentSection.style.display === "block") {
@@ -690,16 +821,13 @@
       }
     }
     window.toggleCommentSection = toggleCommentSection;
-
-    /* ================= Toggle Search Box on Icon Click ================= */
     searchIconBtn.addEventListener('click', () => {
       searchBox.classList.toggle('active');
       if (searchBox.classList.contains('active')) {
         searchBox.focus();
       }
     });
-
-    /* ================= Initialize ================= */
+    /* ================= Initialize Data Load ================= */
     loadTasks();
   </script>
 </body>
