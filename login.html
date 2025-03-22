@@ -39,7 +39,7 @@
       color: #dc3545;
     }
     .form-control {
-      margin-bottom: 20px;
+      margin-bottom: 5px;
       height: 45px;
       font-size: 1rem;
     }
@@ -49,6 +49,7 @@
       font-size: 1.1rem;
       border: none;
       height: 45px;
+      width: 100%;
     }
     .btn-custom:hover {
       background: #c82333;
@@ -60,9 +61,18 @@
     .text-link:hover {
       text-decoration: underline;
     }
+    .error-message {
+      color: red;
+      font-size: 0.9rem;
+      text-align: left;
+      margin-bottom: 10px;
+    }
     .spinner-overlay {
       position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(255,255,255,0.8);
       display: none;
       align-items: center;
@@ -74,22 +84,38 @@
 <body>
   <div class="container-fluid">
     <div class="login-card">
+      <!-- লোডিং স্পিনার -->
       <div class="spinner-overlay" id="spinnerOverlay">
         <div class="spinner-border text-danger" role="status">
           <span class="visually-hidden">লোডিং...</span>
         </div>
       </div>
+
       <h2>লগইন করুন</h2>
+
+      <!-- ইমেইল ইনপুট -->
       <input type="email" id="loginEmail" class="form-control" placeholder="ইমেইল" />
+      <div id="loginEmailError" class="error-message"></div>
+
+      <!-- পাসওয়ার্ড ইনপুট -->
       <input type="password" id="loginPassword" class="form-control" placeholder="পাসওয়ার্ড" />
-      <button class="btn btn-custom w-100" id="loginBtn">লগইন</button>
-      <p class="mt-3">অ্যাকাউন্ট না থাকলে <a href="signup.html" class="text-link">সাইনআপ করুন</a></p>
-      <p class="mt-1"><a href="#" onclick="recoverPassword()" class="text-link">পাসওয়ার্ড রিকভার করুন</a></p>
+      <div id="loginPasswordError" class="error-message"></div>
+
+      <!-- লগইন বাটন -->
+      <button class="btn btn-custom" id="loginBtn">লগইন</button>
+
+      <p class="mt-3">
+        অ্যাকাউন্ট না থাকলে
+        <a href="signup.html" class="text-link">সাইনআপ করুন</a>
+      </p>
+      <p class="mt-1">
+        <span class="text-link" onclick="recoverPassword()">পাসওয়ার্ড রিকভার করুন</span>
+      </p>
     </div>
   </div>
 
   <script>
-    // Firebase config
+    /* ================= Firebase Config & Init ================= */
     const firebaseConfig = {
       apiKey: "AIzaSyAlCr-cphqHaAGN8SoDJ_aOnVBzJOyFLyo",
       authDomain: "post-41a7c.firebaseapp.com",
@@ -102,43 +128,96 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
+    /* ================= DOM Elements ================= */
     const loginBtn = document.getElementById('loginBtn');
     const spinnerOverlay = document.getElementById('spinnerOverlay');
+    const loginEmailError = document.getElementById('loginEmailError');
+    const loginPasswordError = document.getElementById('loginPasswordError');
 
+    /* ================= Error Message Map ================= */
+    const errorMessages = {
+      "auth/wrong-password": "পাসওয়ার্ড ভুল হয়েছে, আবার চেষ্টা করুন।",
+      "auth/invalid-credential": "পাসওয়ার্ড ভুল হয়েছে, আবার চেষ্টা করুন।",
+      "auth/user-not-found": "এই ইমেইলটি রেজিস্টার করা নেই।",
+      "auth/invalid-email": "সঠিক ইমেইল প্রদান করুন।"
+      // অন্যান্য কোড প্রয়োজনে যোগ করুন
+    };
+
+    /* ================= Login Function ================= */
     loginBtn.addEventListener('click', () => {
+      // Clear previous error messages
+      loginEmailError.textContent = "";
+      loginPasswordError.textContent = "";
+
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value.trim();
-      if (!email || !password) {
-        alert("ইমেইল ও পাসওয়ার্ড প্রদান করুন!");
+
+      // ইনপুট ফিল্ড চেক
+      if (!email) {
+        loginEmailError.textContent = "ইমেইল প্রদান করুন!";
         return;
       }
+      if (!password) {
+        loginPasswordError.textContent = "পাসওয়ার্ড প্রদান করুন!";
+        return;
+      }
+
+      // লোডিং স্পিনার দেখান
       spinnerOverlay.style.display = 'flex';
+
+      // Firebase Auth Login
       auth.signInWithEmailAndPassword(email, password)
         .then(() => {
-          alert("লগইন সফল হয়েছে!");
+          // সাকসেসফুল হলে index.html এ পাঠান
           window.location.href = "index.html";
         })
         .catch(error => {
-          alert("লগইন ত্রুটি: " + error.message);
+          // ত্রুটি কোডকে কাস্টম বার্তায় রূপান্তর
+          const msg = errorMessages[error.code] || ("ত্রুটি: " + error.message);
+          // কোন ইনপুটের নিচে দেখাবো নির্ধারণ করা
+          if (error.code === "auth/user-not-found" || error.code === "auth/invalid-email") {
+            loginEmailError.textContent = msg;
+          } else {
+            loginPasswordError.textContent = msg;
+          }
         })
         .finally(() => {
           spinnerOverlay.style.display = 'none';
         });
     });
 
+    /* ================= Password Recovery ================= */
     function recoverPassword() {
+      // পূর্বের ত্রুটি বার্তা ক্লিয়ার
+      loginEmailError.textContent = "";
+      loginPasswordError.textContent = "";
+
       const email = document.getElementById('loginEmail').value.trim();
       if (!email) {
-        alert("পাসওয়ার্ড রিকভার করতে প্রথমে ইমেইল প্রদান করুন!");
+        loginEmailError.textContent = "পাসওয়ার্ড রিকভার করতে প্রথমে ইমেইল প্রদান করুন!";
         return;
       }
+
       spinnerOverlay.style.display = 'flex';
+
       auth.sendPasswordResetEmail(email)
         .then(() => {
-          alert(`রিকভার লিঙ্ক পাঠানো হয়েছে: ${email}`);
+          // সফল হলে সবুজ রঙে বার্তা দেখানো
+          loginEmailError.style.color = "green";
+          loginEmailError.textContent = `রিকভার লিঙ্ক পাঠানো হয়েছে: ${email}`;
         })
         .catch(error => {
-          alert("রিকভার ত্রুটি: " + error.message);
+          // ত্রুটি কোড চেক করে কাস্টম বার্তা
+          if (error.code === "auth/user-not-found") {
+            loginEmailError.style.color = "red";
+            loginEmailError.textContent = "এই ইমেইলটি রেজিস্টার করা নেই।";
+          } else if (error.code === "auth/invalid-email") {
+            loginEmailError.style.color = "red";
+            loginEmailError.textContent = "সঠিক ইমেইল প্রদান করুন!";
+          } else {
+            loginEmailError.style.color = "red";
+            loginEmailError.textContent = "রিকভার ত্রুটি: " + error.message;
+          }
         })
         .finally(() => {
           spinnerOverlay.style.display = 'none';
