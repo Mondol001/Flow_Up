@@ -8,203 +8,66 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <!-- html2canvas for image download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <style>
-    /* Wrapper & Global Styles */
-    body, html {
-      height: 100%;
-      margin: 0;
-    }
-    .wrapper {
-      display: flex;
-      flex-direction: column;
-      min-height: 100%;
-    }
-    .content {
-      flex: 1;
-      position: relative;
-      padding-top: 70px; /* Navbar height */
-    }
+    /* Global & Wrapper Styles */
+    body, html { height: 100%; margin: 0; }
+    .wrapper { display: flex; flex-direction: column; min-height: 100%; }
+    .content { flex: 1; position: relative; padding-top: 70px; }
     body, h1, h2, h3, h4, h5, h6, p, label, input, select, button, a {
-      color: #212529;
-      font-weight: bold;
-      font-family: "Courier New", Courier, monospace;
-      transition: all 0.3s ease;
+      color: #212529; font-weight: bold; font-family: "Courier New", Courier, monospace; transition: all 0.3s ease;
     }
-    body {
-      background-color: #f8f9fa;
-    }
+    body { background-color: #f8f9fa; }
     /* Navbar */
-    .navbar {
-      background-color: #dc3545;
-      padding: 1rem;
-      position: fixed;
-      top: 0;
-      width: 100%;
-      z-index: 1050;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .navbar-brand small {
-      font-size: 1rem;
-      margin-left: 5px;
-      color: #f1f1f1;
-    }
-    #searchIconBtn, #profileIconBtn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 1.5rem;
-      cursor: pointer;
-      margin-left: 10px;
-    }
-    .action-container {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 10px;
-      margin: 2rem 0;
-    }
-    .search-box {
-      width: 0;
-      opacity: 0;
-      transition: width 0.3s ease, opacity 0.3s ease;
-      overflow: hidden;
-    }
-    .search-box.active {
-      width: 200px;
-      opacity: 1;
-    }
+    .navbar { background-color: #dc3545; padding: 1rem; position: fixed; top: 0; width: 100%; z-index: 1050; display: flex; justify-content: space-between; align-items: center; }
+    .navbar-brand small { font-size: 1rem; margin-left: 5px; color: #f1f1f1; }
+    #searchIconBtn, #profileIconBtn { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; margin-left: 10px; }
+    .action-container { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin: 2rem 0; }
+    .search-box { width: 0; opacity: 0; transition: width 0.3s ease, opacity 0.3s ease; overflow: hidden; }
+    .search-box.active { width: 200px; opacity: 1; }
     /* Card Styles */
-    .card {
-      background-color: #fff;
-      border: 1px solid #ced4da;
-      margin-bottom: 1rem;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeIn 0.5s forwards;
-    }
-    @keyframes fadeIn {
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .card-header {
-      background-color: #b3d7ff;
-      padding: 0.5rem 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #80bfff;
-      box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
-    }
+    .card { background-color: #fff; border: 1px solid #ced4da; margin-bottom: 1rem; opacity: 0; transform: translateY(20px); animation: fadeIn 0.5s forwards; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+    .card-header { background-color: #b3d7ff; padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #80bfff; box-shadow: 0px 2px 5px rgba(0,0,0,0.1); }
     .card-header h5 { margin: 0; }
     .timestamp, .progress-timestamp { font-size: 0.7rem; color: #6c757d; }
-    .dot-btn {
-      background: none;
-      border: none;
-      color: #212529;
-      font-size: 1.8rem;
-      cursor: pointer;
-      transition: color 0.3s ease;
-    }
+    .dot-btn { background: none; border: none; color: #212529; font-size: 1.8rem; cursor: pointer; transition: color 0.3s ease; }
     .dot-btn:hover { color: #dc3545; }
-    .priority-line, .status-line {
-      display: flex;
-      align-items: center;
-      margin-bottom: 0.5rem;
-    }
+    .priority-line, .status-line { display: flex; align-items: center; margin-bottom: 0.5rem; }
     .priority-line small, .status-line small { margin-right: 5px; }
     .task-progress { min-width: 150px; cursor: pointer; }
     .progress-text { font-size: 1.2rem; margin-top: 0.3rem; }
-    .show-more {
-      color: #007bff;
-      text-decoration: underline;
-      cursor: pointer;
-      margin-top: 0.5rem;
-      display: inline-block;
-    }
-    .comment-section {
-      padding: 0.5rem 1rem;
-      border-top: 1px solid #ced4da;
-      background-color: #f1f3f5;
-    }
+    .show-more { color: #007bff; text-decoration: underline; cursor: pointer; margin-top: 0.5rem; display: inline-block; }
+    .comment-section { padding: 0.5rem 1rem; border-top: 1px solid #ced4da; background-color: #f1f3f5; }
     /* Comment Styling */
-    .comment {
-      border-bottom: 1px solid #dee2e6;
-      padding: 0.5rem 0;
-      position: relative;
-    }
+    .comment { border-bottom: 1px solid #dee2e6; padding: 0.5rem 0; position: relative; }
     .comment:last-child { border-bottom: none; }
-    .comment-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    .comment-header { display: flex; justify-content: space-between; align-items: center; }
     .comment .comment-author { font-size: 0.9rem; color: #343a40; }
     .comment .comment-timestamp { font-size: 0.8rem; color: #6c757d; }
     .comment .comment-text { margin-top: 0.2rem; font-size: 1.5rem; }
-    .comment-options-btn {
-      background: none;
-      border: none;
-      font-size: 1rem;
-      cursor: pointer;
-      color: #6c757d;
-    }
+    .comment-options-btn { background: none; border: none; font-size: 1rem; cursor: pointer; color: #6c757d; }
     .comment-options-btn:hover { color: #dc3545; }
     /* Modals */
-    .modal-content {
-      background-color: #fff;
-      border: 1px solid #dc3545;
-    }
-    .btn-modal {
-      background-color: #dc3545;
-      border: none;
-      color: #fff;
-    }
+    .modal-content { background-color: #fff; border: 1px solid #dc3545; }
+    .btn-modal { background-color: #dc3545; border: none; color: #fff; }
     .btn-modal:hover { background-color: #bb2d3b; }
-    #toastContainer {
-      position: fixed;
-      top: 80px;
-      right: 1rem;
-      z-index: 1055;
-    }
-    /* Footer Styles */
-    footer {
-      background-color: #e9ecef;
-      color: #212529;
-      padding: 20px 0;
-    }
-    footer .container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around;
-      align-items: center;
-      text-align: center;
-    }
-    footer a {
-      color: #212529;
-      margin: 0 10px;
-      text-decoration: none;
-    }
+    /* Toast Container: ensure it appears above modals */
+    #toastContainer { position: fixed; top: 80px; right: 1rem; z-index: 2000; }
+    /* Footer */
+    footer { background-color: #e9ecef; color: #212529; padding: 20px 0; }
+    footer .container { display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; text-align: center; }
+    footer a { color: #212529; margin: 0 10px; text-decoration: none; }
     footer a:hover { color: #007bff; }
     footer .social-icons i { font-size: 1.5em; margin-right: 10px; }
     footer .qr-code img { width: 100px; }
     /* Spinner Overlay */
-    .spinner-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255,255,255,0.8);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-    }
+    .spinner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; align-items: center; justify-content: center; z-index: 999; }
   </style>
 </head>
 <body>
@@ -236,6 +99,23 @@
 
       <!-- Toast Container -->
       <div id="toastContainer"></div>
+
+      <!-- Task Options Modal -->
+      <div class="modal fade" id="taskOptionsModal" tabindex="-1" aria-labelledby="taskOptionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="taskOptionsModalLabel">টাস্ক অপশন</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+              <button type="button" class="btn btn-info mb-2" id="downloadTaskBtn">Download as Image</button>
+              <br />
+              <button type="button" class="btn btn-modal" id="editTaskOptionBtn" style="display: none;">এডিট করুন</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Add Task Modal -->
       <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
@@ -358,6 +238,7 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
+              <!-- নিজের কমেন্ট হলে এডিট ও ডিলিট দেখাবে -->
               <button type="button" class="btn btn-warning mb-2" id="editCommentBtn">এডিট</button>
               <br />
               <button type="button" class="btn btn-danger" id="deleteCommentBtn">ডিলিট</button>
@@ -458,14 +339,12 @@
           </div>
         </div>
       </div>
-      
     </div>
     <!-- Footer -->
     <footer>
       <div class="container">
         <div class="mb-3">
-          <strong>কোম্পানি: XYZ লিমিটেড</strong>
-          <br />
+          <strong>কোম্পানি: XYZ লিমিটেড</strong><br />
           <a href="https://facebook.com/yourpage" target="_blank"><i class="bi bi-facebook"></i> Facebook</a>
           <a href="https://instagram.com/yourprofile" target="_blank"><i class="bi bi-instagram"></i> Instagram</a>
           <a href="https://t.me/yourchannel" target="_blank"><i class="bi bi-telegram"></i> Telegram</a>
@@ -484,7 +363,7 @@
   <!-- Bootstrap Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    /* ================= Firebase Config & Initialization ================= */
+    // Firebase Initialization
     const firebaseConfig = {
       apiKey: "AIzaSyAlCr-cphqHaAGN8SoDJ_aOnVBzJOyFLyo",
       authDomain: "post-41a7c.firebaseapp.com",
@@ -498,7 +377,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    /* ================= Global Variables ================= */
+    // Global Variables
     let tasks = [];
     let selectedTaskId = null;
     let currentUserUid = null;
@@ -508,7 +387,7 @@
     let openComments = {};
     let selectedComment = null; // For comment edit/delete
 
-    /* ================= DOM Elements ================= */
+    // DOM Elements
     const taskContainer = document.getElementById('taskContainer');
     const searchBox = document.getElementById('searchBox');
     const searchIconBtn = document.getElementById('searchIconBtn');
@@ -535,6 +414,9 @@
     const updateProgressModal = new bootstrap.Modal(document.getElementById('updateProgressModal'));
     const newProgressInput = document.getElementById('newProgressInput');
     const saveProgressBtn = document.getElementById('saveProgressBtn');
+
+    // Task Options Modal
+    const taskOptionsModal = new bootstrap.Modal(document.getElementById('taskOptionsModal'));
 
     // Comment Modals
     const commentOptionsModal = new bootstrap.Modal(document.getElementById('commentOptionsModal'));
@@ -568,10 +450,7 @@
       const strHours = String(hours).padStart(2, '0');
       return `${dd}-${mm}-${yyyy}, ${strHours}:${min} ${ampm}`;
     }
-    // Use formatTimestamp for comment date-time display
-    function formatDateTime(ts) {
-      return formatTimestamp(ts);
-    }
+    function formatDateTime(ts) { return formatTimestamp(ts); }
     function getProgressTitle(progress) {
       if (progress === 0) return "Not Started 😴";
       else if (progress > 0 && progress < 100) return "In Progress ⏳";
@@ -592,23 +471,14 @@
         </div>
       `;
       toastContainer.appendChild(toastEl);
-      setTimeout(() => {
-        toastEl.classList.remove('show');
-        toastEl.remove();
-      }, 3000);
+      setTimeout(() => { toastEl.classList.remove('show'); toastEl.remove(); }, 3000);
     }
 
     /* ================= Search Functionality ================= */
     searchIconBtn.addEventListener('click', () => {
-      // Toggle the search box active class
       searchBox.classList.toggle('active');
-      if (searchBox.classList.contains('active')) {
-        searchBox.focus();
-      } else {
-        // Clear the search input and re-render tasks
-        searchBox.value = "";
-        renderTasks();
-      }
+      if (searchBox.classList.contains('active')) { searchBox.focus(); }
+      else { searchBox.value = ""; renderTasks(); }
     });
     searchBox.addEventListener('input', renderTasks);
 
@@ -616,25 +486,26 @@
     auth.onAuthStateChanged(user => {
       if (user) {
         currentUserUid = user.uid;
-        db.collection("users").doc(user.uid).get()
-          .then(doc => {
-            if (doc.exists) {
-              const data = doc.data();
-              currentUserName = user.displayName || data.name || "anonymous";
-              currentUserEmail = data.email || "";
-              currentUserRole = data.role || "user";
-            }
-            document.getElementById('app-section').style.display = "block";
-            profileIconBtn.style.display = "inline-block";
-            if (currentUserRole !== 'admin') {
-              addTaskBtn.style.display = "none";
-            }
-            userNameDisplay.innerText = "নাম: " + currentUserName;
-            userEmailDisplay.innerText = "ইমেইল: " + currentUserEmail;
-            userRoleDisplay.innerText = "রোল: " + currentUserRole;
-            loadTasks();
-          })
-          .catch(err => console.error("তথ্য লোড করতে সমস্যা:", err));
+        db.collection("users").doc(user.uid).get().then(doc => {
+          if (doc.exists) {
+            const data = doc.data();
+            currentUserName = user.displayName || data.name || "anonymous";
+            currentUserEmail = data.email || "";
+            currentUserRole = data.role || "user";
+          }
+          document.getElementById('app-section').style.display = "block";
+          profileIconBtn.style.display = "inline-block";
+          if (currentUserRole !== 'admin') { addTaskBtn.style.display = "none"; }
+          if (currentUserRole === 'admin') {
+            document.getElementById('editTaskOptionBtn').style.display = 'inline-block';
+          } else {
+            document.getElementById('editTaskOptionBtn').style.display = 'none';
+          }
+          userNameDisplay.innerText = "নাম: " + currentUserName;
+          userEmailDisplay.innerText = "ইমেইল: " + currentUserEmail;
+          userRoleDisplay.innerText = "রোল: " + currentUserRole;
+          loadTasks();
+        }).catch(err => console.error("তথ্য লোড করতে সমস্যা:", err));
       } else {
         document.getElementById('app-section').style.display = "none";
         profileIconBtn.style.display = "none";
@@ -642,62 +513,43 @@
       }
     });
 
-    function logout() {
-      auth.signOut().then(() => console.log("লগআউট সফল"));
-    }
-    modalLogoutBtn.addEventListener('click', () => {
-      logout();
-      profileModal.hide();
-    });
+    function logout() { auth.signOut().then(() => console.log("লগআউট সফল")); }
+    modalLogoutBtn.addEventListener('click', () => { logout(); profileModal.hide(); });
     profileIconBtn.addEventListener('click', () => { profileModal.show(); });
 
     /* ================= Role Based Check ================= */
     function requireAdmin(actionName) {
-      if (currentUserRole !== 'admin') {
-        showToast(`Access Denied! শুধুমাত্র এডমিন ${actionName} করতে পারবেন।`);
-        return false;
-      }
+      if (currentUserRole !== 'admin') { showToast(`Access Denied! শুধুমাত্র এডমিন ${actionName} করতে পারবেন।`); return false; }
       return true;
     }
 
     /* ================= Load & Render Tasks ================= */
     function loadTasks() {
-      db.collection('tasks')
-        .orderBy('timestamp', 'desc')
-        .onSnapshot(snapshot => {
-          tasks = [];
-          snapshot.forEach(doc => {
-            let data = doc.data();
-            data.id = doc.id;
-            tasks.push(data);
-          });
-          renderTasks();
-        });
+      db.collection('tasks').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+        tasks = [];
+        snapshot.forEach(doc => { let data = doc.data(); data.id = doc.id; tasks.push(data); });
+        renderTasks();
+      });
     }
 
     function renderTasks() {
       taskContainer.innerHTML = '';
       const query = searchBox.value.trim().toLowerCase();
       let filteredTasks = tasks;
-      if (query) {
-        filteredTasks = tasks.filter(task => task.name.toLowerCase().includes(query));
-      }
+      if (query) { filteredTasks = tasks.filter(task => task.name.toLowerCase().includes(query)); }
       filteredTasks.forEach(task => {
         const createdAt = task.timestamp ? formatTimestamp(task.timestamp) : "N/A";
         const progressUpdated = task.progressTimestamp ? formatTimestamp(task.progressTimestamp) : "N/A";
         const taskNameClass = (task.progress === 100) ? 'text-decoration-line-through' : '';
 
-        // Render comments
+        // Render comments (no reply/like system)
         let commentsHtml = '';
         if (task.comments && task.comments.length > 0) {
           task.comments.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
           task.comments.forEach(cmt => {
-            let commentOptionsBtn = "";
-            if (cmt.userId === currentUserUid || currentUserRole === 'admin') {
-              commentOptionsBtn = `<button class="comment-options-btn" onclick="openCommentOptions(this, '${task.id}')">
-                                      <i class="bi bi-three-dots"></i>
-                                    </button>`;
-            }
+            let commentOptionsBtn = `<button class="comment-options-btn" onclick="openCommentOptions(this, '${task.id}')">
+                                        <i class="bi bi-three-dots"></i>
+                                      </button>`;
             commentsHtml += `
               <div class="comment"
                    data-comment-timestamp="${cmt.timestamp.seconds}"
@@ -715,7 +567,7 @@
           });
         }
 
-        // Task edit button – active only for admin.
+        // Task options button – always visible.
         const taskEditBtn = `<button class="dot-btn" onclick="handleThreeDots('${task.id}')">
                                 <i class="bi bi-three-dots-vertical"></i>
                               </button>`;
@@ -728,6 +580,7 @@
 
         const card = document.createElement('div');
         card.className = 'card shadow mb-3';
+        card.setAttribute('data-task-id', task.id);
         card.innerHTML = `
           <div class="card-header">
             <div>
@@ -750,9 +603,7 @@
               <small>Status:</small>
               <div class="task-progress ms-2" ondblclick="openProgressModal('${task.id}', ${task.progress})">
                 <div class="progress" style="height:25px; width:150px;">
-                  <div class="progress-bar bg-info" role="progressbar"
-                       style="width: ${task.progress}%;"
-                       aria-valuenow="${task.progress}" aria-valuemin="0" aria-valuemax="100">
+                  <div class="progress-bar bg-info" role="progressbar" style="width: ${task.progress}%;" aria-valuenow="${task.progress}" aria-valuemin="0" aria-valuemax="100">
                     ${task.progress}%
                   </div>
                 </div>
@@ -767,8 +618,7 @@
               <div class="comment-list">${commentsHtml}</div>
               <div class="input-group mt-2">
                 <input type="text" class="form-control comment-input" placeholder="কমেন্ট লিখুন" />
-                <button class="btn btn-outline-secondary comment-submit" type="button"
-                        onclick="submitComment('${task.id}', this)">Send</button>
+                <button class="btn btn-outline-secondary comment-submit" type="button" onclick="submitComment('${task.id}', this)">Send</button>
               </div>
             </div>
           </div>
@@ -776,18 +626,29 @@
         taskContainer.appendChild(card);
       });
     }
-    function toggleCommentSection(linkEl, taskId) {
-      openComments[taskId] = !openComments[taskId];
-      renderTasks();
-    }
+    searchBox.addEventListener('input', renderTasks);
+    function toggleCommentSection(linkEl, taskId) { openComments[taskId] = !openComments[taskId]; renderTasks(); }
 
-    /* ================= Handle Task Three Dots (Edit) ================= */
+    /* ================= Handle Task Options (Three Dots) ================= */
     function handleThreeDots(taskId) {
-      if (currentUserRole === 'admin') {
-        openEditModal(taskId);
-      }
+      selectedTaskId = taskId;
+      taskOptionsModal.show();
     }
     window.handleThreeDots = handleThreeDots;
+    document.getElementById('downloadTaskBtn')?.addEventListener('click', () => {
+      const card = document.querySelector(`[data-task-id="${selectedTaskId}"]`);
+      html2canvas(card).then(canvas => {
+        const link = document.createElement('a');
+        link.download = "task.png";
+        link.href = canvas.toDataURL();
+        link.click();
+        taskOptionsModal.hide();
+      }).catch(err => { console.error(err); showToast("ডাউনলোড করতে সমস্যা হয়েছে!"); });
+    });
+    document.getElementById('editTaskOptionBtn')?.addEventListener('click', () => {
+      taskOptionsModal.hide();
+      if (currentUserRole === 'admin') { openEditModal(selectedTaskId); }
+    });
 
     /* ================= Update Progress Modal ================= */
     function openProgressModal(taskId, currentProgress) {
@@ -799,22 +660,12 @@
     window.openProgressModal = openProgressModal;
     saveProgressBtn.addEventListener('click', () => {
       const newProgress = parseInt(newProgressInput.value);
-      if (isNaN(newProgress) || newProgress < 0 || newProgress > 100) {
-        showToast("সঠিক মান (0-100) দিন!");
-        return;
-      }
+      if (isNaN(newProgress) || newProgress < 0 || newProgress > 100) { showToast("সঠিক মান (0-100) দিন!"); return; }
       db.collection('tasks').doc(selectedTaskId).update({
         progress: newProgress,
         progressTimestamp: firebase.firestore.FieldValue.serverTimestamp()
-      })
-      .then(() => {
-        showToast("প্রগ্রেস আপডেট হয়েছে!");
-        updateProgressModal.hide();
-      })
-      .catch(err => {
-        console.error(err);
-        showToast("আপডেট করতে সমস্যা হয়েছে!");
-      });
+      }).then(() => { showToast("প্রগ্রেস আপডেট হয়েছে!"); updateProgressModal.hide(); })
+      .catch(err => { console.error(err); showToast("আপডেট করতে সমস্যা হয়েছে!"); });
     });
 
     /* ================= Comment Options Handling ================= */
@@ -822,17 +673,19 @@
       const commentDiv = btn.closest('.comment');
       const commentTimestamp = commentDiv.getAttribute('data-comment-timestamp');
       const commentText = commentDiv.getAttribute('data-comment-text');
-      const commentName = commentDiv.getAttribute('data-comment-name');
       const commentUserId = commentDiv.getAttribute('data-comment-userid');
-      
-      if (commentUserId === currentUserUid || currentUserRole === 'admin') {
+      // যদি নিজস্ব কমেন্ট হয়, তাহলে মোডালে এডিট ও ডিলিট দেখানো হবে
+      if (commentUserId === currentUserUid) {
         selectedComment = { taskId, timestamp: commentTimestamp, text: commentText, userId: commentUserId };
+        // সর্বদা নিজের কমেন্টে এডিট ও ডিলিট অপশন দেখান
+        document.getElementById('editCommentBtn').style.display = 'inline-block';
         commentOptionsModal.show();
       }
+      // অন্য কারো কমেন্টে ক্লিক করলে, কিছুই না
     }
     window.openCommentOptions = openCommentOptions;
     
-    // Handle Comment Edit option
+    // Comment Edit
     document.getElementById('editCommentBtn').addEventListener('click', () => {
       commentOptionsModal.hide();
       if (selectedComment) {
@@ -843,47 +696,29 @@
     // Save Comment Edit
     saveCommentEditBtn.addEventListener('click', () => {
       const newText = editCommentInput.value.trim();
-      if (newText === "") {
-        showToast("কমেন্ট খালি হতে পারে না!");
-        return;
-      }
+      if (newText === "") { showToast("কমেন্ট খালি হতে পারে না!"); return; }
       const taskRef = db.collection('tasks').doc(selectedComment.taskId);
       taskRef.get().then(doc => {
         if (doc.exists) {
           const taskData = doc.data();
           const oldComments = taskData.comments || [];
           let oldComment = null;
-          oldComments.forEach(c => {
-            if(c.timestamp.seconds == selectedComment.timestamp) {
-              oldComment = c;
-            }
-          });
+          oldComments.forEach(c => { if (c.timestamp.seconds == selectedComment.timestamp) { oldComment = c; } });
           if (oldComment) {
             const updatedComment = { ...oldComment, comment: newText };
-            taskRef.update({
-              comments: firebase.firestore.FieldValue.arrayRemove(oldComment)
-            }).then(() => {
-              return taskRef.update({
-                comments: firebase.firestore.FieldValue.arrayUnion(updatedComment)
-              });
-            }).then(() => {
-              showToast("কমেন্ট আপডেট হয়েছে!");
-              commentEditModal.hide();
-            }).catch(err => {
-              console.error(err);
-              showToast("কমেন্ট আপডেট করতে সমস্যা হয়েছে!");
-            });
+            taskRef.update({ comments: firebase.firestore.FieldValue.arrayRemove(oldComment) })
+            .then(() => { return taskRef.update({ comments: firebase.firestore.FieldValue.arrayUnion(updatedComment) }); })
+            .then(() => { showToast("কমেন্ট আপডেট হয়েছে!"); commentEditModal.hide(); })
+            .catch(err => { console.error(err); showToast("কমেন্ট আপডেট করতে সমস্যা হয়েছে!"); });
           }
         }
       });
     });
-
-    // Handle Comment Delete option
+    // Comment Delete
     document.getElementById('deleteCommentBtn').addEventListener('click', () => {
       commentOptionsModal.hide();
       commentDeleteModal.show();
     });
-    // Confirm Comment Delete
     document.getElementById('confirmCommentDeleteBtn').addEventListener('click', () => {
       const taskRef = db.collection('tasks').doc(selectedComment.taskId);
       taskRef.get().then(doc => {
@@ -891,21 +726,11 @@
           const taskData = doc.data();
           const oldComments = taskData.comments || [];
           let oldComment = null;
-          oldComments.forEach(c => {
-            if(c.timestamp.seconds == selectedComment.timestamp) {
-              oldComment = c;
-            }
-          });
+          oldComments.forEach(c => { if (c.timestamp.seconds == selectedComment.timestamp) { oldComment = c; } });
           if (oldComment) {
-            taskRef.update({
-              comments: firebase.firestore.FieldValue.arrayRemove(oldComment)
-            }).then(() => {
-              showToast("কমেন্ট ডিলিট হয়েছে!");
-              commentDeleteModal.hide();
-            }).catch(err => {
-              console.error(err);
-              showToast("কমেন্ট ডিলিট করতে সমস্যা হয়েছে!");
-            });
+            taskRef.update({ comments: firebase.firestore.FieldValue.arrayRemove(oldComment) })
+            .then(() => { showToast("কমেন্ট ডিলিট হয়েছে!"); commentDeleteModal.hide(); })
+            .catch(err => { console.error(err); showToast("কমেন্ট ডিলিট করতে সমস্যা হয়েছে!"); });
           }
         }
       });
@@ -915,30 +740,20 @@
     saveNewTaskBtn.addEventListener('click', () => {
       if (!requireAdmin("যোগ করতে")) return;
       const name = newTaskNameEl.value.trim();
-      if (name === '') {
-        showToast("টাস্কের নাম লিখুন!");
-        return;
-      }
+      if (name === "") { showToast("টাস্কের নাম লিখুন!"); return; }
       const priority = newTaskPriorityEl.value;
       const progress = parseInt(newTaskProgressEl.value) || 0;
       db.collection('tasks').add({
-        name,
-        priority,
-        progress,
+        name, priority, progress,
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         progressTimestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        comments: []  // Initially empty
-      })
-      .then(() => {
+        comments: []
+      }).then(() => {
         showToast("টাস্ক সফলভাবে যোগ হয়েছে!");
         addTaskModal.hide();
-        newTaskNameEl.value = '';
-        newTaskProgressEl.value = '0';
-      })
-      .catch(err => {
-        console.error(err);
-        showToast("যোগ করতে সমস্যা হয়েছে!");
-      });
+        newTaskNameEl.value = "";
+        newTaskProgressEl.value = "0";
+      }).catch(err => { console.error(err); showToast("যোগ করতে সমস্যা হয়েছে!"); });
     });
     function openEditModal(taskId) {
       if (!requireAdmin("এডিট করতে")) return;
@@ -955,26 +770,14 @@
     saveEditTaskBtn.addEventListener('click', () => {
       if (!requireAdmin("এডিট করতে")) return;
       const name = editTaskNameEl.value.trim();
-      if (name === '') {
-        showToast("টাস্কের নাম লিখুন!");
-        return;
-      }
+      if (name === "") { showToast("টাস্কের নাম লিখুন!"); return; }
       const priority = editTaskPriorityEl.value;
       const progress = parseInt(editTaskProgressEl.value) || 0;
       db.collection('tasks').doc(selectedTaskId).update({
-        name,
-        priority,
-        progress,
+        name, priority, progress,
         progressTimestamp: firebase.firestore.FieldValue.serverTimestamp()
-      })
-      .then(() => {
-        showToast("টাস্ক সফলভাবে এডিট হয়েছে!");
-        editTaskModal.hide();
-      })
-      .catch(err => {
-        console.error(err);
-        showToast("এডিট করতে সমস্যা হয়েছে!");
-      });
+      }).then(() => { showToast("টাস্ক সফলভাবে এডিট হয়েছে!"); editTaskModal.hide(); })
+      .catch(err => { console.error(err); showToast("এডিট করতে সমস্যা হয়েছে!"); });
     });
     function onUpdateTaskProgress(taskId) {
       const task = tasks.find(t => t.id === taskId);
@@ -988,43 +791,32 @@
     }
     window.openDeleteModal = openDeleteModal;
     confirmDeleteTaskBtn.addEventListener('click', () => {
-      db.collection('tasks').doc(selectedTaskId).delete()
-        .then(() => {
-          showToast("টাস্ক সফলভাবে ডিলিট হয়েছে!");
-          deleteTaskModal.hide();
-        })
-        .catch(err => {
-          console.error(err);
-          showToast("টাস্ক ডিলিট করতে সমস্যা হয়েছে!");
-        });
+      db.collection('tasks').doc(selectedTaskId).delete().then(() => {
+        showToast("টাস্ক সফলভাবে ডিলিট হয়েছে!");
+        deleteTaskModal.hide();
+      }).catch(err => { console.error(err); showToast("টাস্ক ডিলিট করতে সমস্যা হয়েছে!"); });
     });
     function submitComment(taskId, btn) {
       const inputGroup = btn.parentElement;
       const commentInput = inputGroup.querySelector('.comment-input');
       const commentText = commentInput.value.trim();
-      if (commentText === '') {
-        showToast("কমেন্ট লিখুন!");
-        return;
-      }
+      if (commentText === "") { showToast("কমেন্ট লিখুন!"); return; }
       const commentObj = {
         userId: currentUserUid,
         name: currentUserName || "anonymous",
         comment: commentText,
-        timestamp: firebase.firestore.Timestamp.now()
+        timestamp: firebase.firestore.Timestamp.now(),
+        likes: [],
+        replies: []
       };
       db.collection('tasks').doc(taskId).update({
         comments: firebase.firestore.FieldValue.arrayUnion(commentObj)
-      })
-      .then(() => {
+      }).then(() => {
         showToast("কমেন্ট যোগ হয়েছে!");
-        commentInput.value = '';
+        commentInput.value = "";
         openComments[taskId] = true;
         renderTasks();
-      })
-      .catch(err => {
-        console.error(err);
-        showToast("কমেন্ট যোগ করতে সমস্যা হয়েছে!");
-      });
+      }).catch(err => { console.error(err); showToast("কমেন্ট যোগ করতে সমস্যা হয়েছে!"); });
     }
     window.submitComment = submitComment;
 
@@ -1033,20 +825,13 @@
       const currentPassword = document.getElementById('currentPassword').value.trim();
       const newPassword = document.getElementById('newPassword').value.trim();
       const confirmPassword = document.getElementById('confirmPassword').value.trim();
-      
-      if (!currentPassword || !newPassword || !confirmPassword) {
-        showToast("সব ইনপুট পূরণ করুন!");
-        return;
-      }
-      if (newPassword !== confirmPassword) {
-        showToast("নতুন পাসওয়ার্ড মিলছে না!");
-        return;
-      }
-      // reauthenticate() ও updatePassword() ব্যবহার করে বাস্তবে পাসওয়ার্ড পরিবর্তন করা উচিত।
+      if (!currentPassword || !newPassword || !confirmPassword) { showToast("সব ইনপুট পূরণ করুন!"); return; }
+      if (newPassword !== confirmPassword) { showToast("নতুন পাসওয়ার্ড মিলছে না!"); return; }
+      // এখানে reauthenticate() ও updatePassword() ব্যবহার করে বাস্তবে পাসওয়ার্ড পরিবর্তন করা উচিত।
       showToast("পাসওয়ার্ড সফলভাবে পরিবর্তিত হয়েছে!");
-      document.getElementById('currentPassword').value = '';
-      document.getElementById('newPassword').value = '';
-      document.getElementById('confirmPassword').value = '';
+      document.getElementById('currentPassword').value = "";
+      document.getElementById('newPassword').value = "";
+      document.getElementById('confirmPassword').value = "";
       bootstrap.Modal.getInstance(document.getElementById('passwordModal')).hide();
     });
 
