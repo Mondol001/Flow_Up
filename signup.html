@@ -40,7 +40,7 @@
       color: #dc3545;
     }
     .form-control {
-      margin-bottom: 20px;
+      margin-bottom: 5px;
       height: 45px;
       font-size: 1rem;
     }
@@ -50,6 +50,7 @@
       font-size: 1.1rem;
       border: none;
       height: 45px;
+      width: 100%;
     }
     .btn-custom:hover {
       background: #c82333;
@@ -60,6 +61,12 @@
     }
     .text-link:hover {
       text-decoration: underline;
+    }
+    .error-message {
+      color: red;
+      font-size: 0.9rem;
+      text-align: left;
+      margin-bottom: 10px;
     }
     .spinner-overlay {
       position: absolute;
@@ -81,11 +88,25 @@
         </div>
       </div>
       <h2>সাইনআপ করুন</h2>
+
+      <!-- নাম ইনপুট -->
       <input type="text" id="signupName" class="form-control" placeholder="নাম" />
+      <div id="signupNameError" class="error-message"></div>
+
+      <!-- ইমেইল ইনপুট -->
       <input type="email" id="signupEmail" class="form-control" placeholder="ইমেইল" />
+      <div id="signupEmailError" class="error-message"></div>
+
+      <!-- পাসওয়ার্ড ইনপুট -->
       <input type="password" id="signupPassword" class="form-control" placeholder="পাসওয়ার্ড" />
-      <button class="btn btn-custom w-100" id="signupBtn">সাইনআপ</button>
-      <p class="mt-3">অ্যাকাউন্ট থাকলে <a href="login.html" class="text-link">লগইন করুন</a></p>
+      <div id="signupPasswordError" class="error-message"></div>
+
+      <!-- সাইনআপ বাটন -->
+      <button class="btn btn-custom" id="signupBtn">সাইনআপ</button>
+      <p class="mt-3">
+        অ্যাকাউন্ট থাকলে
+        <a href="login.html" class="text-link">লগইন করুন</a>
+      </p>
     </div>
   </div>
 
@@ -105,20 +126,51 @@
 
     const signupBtn = document.getElementById('signupBtn');
     const spinnerOverlay = document.getElementById('spinnerOverlay');
+    const signupNameError = document.getElementById('signupNameError');
+    const signupEmailError = document.getElementById('signupEmailError');
+    const signupPasswordError = document.getElementById('signupPasswordError');
+
+    // ত্রুটি কোডের জন্য কাস্টম বার্তা
+    const signupErrorMessages = {
+      "auth/email-already-in-use": "এই ইমেইলটি আগে থেকেই রেজিস্টার করা আছে!",
+      "auth/weak-password": "পাসওয়ার্ড খুব দুর্বল, আরো শক্তিশালী পাসওয়ার্ড ব্যবহার করুন!",
+      "auth/invalid-email": "সঠিক ইমেইল প্রদান করুন!"
+      // অন্য কোড লাগলে যোগ করুন
+    };
 
     signupBtn.addEventListener('click', () => {
+      // Clear previous error messages
+      signupNameError.textContent = "";
+      signupEmailError.textContent = "";
+      signupPasswordError.textContent = "";
+
       const name = document.getElementById('signupName').value.trim();
       const email = document.getElementById('signupEmail').value.trim();
       const password = document.getElementById('signupPassword').value.trim();
-      if (!name || !email || !password) {
-        alert("সকল তথ্য প্রদান করুন!");
+
+      // ইনপুট ফিল্ড চেক
+      if (!name) {
+        signupNameError.textContent = "নাম প্রদান করুন!";
         return;
       }
+      if (!email) {
+        signupEmailError.textContent = "ইমেইল প্রদান করুন!";
+        return;
+      }
+      if (!password) {
+        signupPasswordError.textContent = "পাসওয়ার্ড প্রদান করুন!";
+        return;
+      }
+
       spinnerOverlay.style.display = 'flex';
+
+      // Firebase সাইনআপ
       auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
           const user = userCredential.user;
+          // নাম সেট করা
           return user.updateProfile({ displayName: name }).then(() => {
+            // Firestore-এ সংরক্ষণ
             return db.collection("users").doc(user.uid).set({
               name: name,
               email: email,
@@ -127,11 +179,19 @@
           });
         })
         .then(() => {
-          alert("সাইনআপ সফল হয়েছে!");
           window.location.href = "index.html";
         })
         .catch(error => {
-          alert("সাইনআপ ত্রুটি: " + error.message);
+          // কাস্টম বার্তা
+          const msg = signupErrorMessages[error.code] || ("ত্রুটি: " + error.message);
+          // কোন ইনপুটের নিচে দেখাবো নির্ধারণ
+          if (error.code === "auth/email-already-in-use" || error.code === "auth/invalid-email") {
+            signupEmailError.textContent = msg;
+          } else if (error.code === "auth/weak-password") {
+            signupPasswordError.textContent = msg;
+          } else {
+            signupPasswordError.textContent = msg;
+          }
         })
         .finally(() => {
           spinnerOverlay.style.display = 'none';
