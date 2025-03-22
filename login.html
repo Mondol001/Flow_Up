@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Flow up by zubayer</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Courier New', Courier, monospace;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    }
+    .container-fluid {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-card {
+      background: #fff;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      text-align: center;
+    }
+    .login-card h2 {
+      margin-bottom: 30px;
+      color: #dc3545;
+    }
+    .form-control {
+      margin-bottom: 20px;
+      height: 45px;
+      font-size: 1rem;
+    }
+    .btn-custom {
+      background: #dc3545;
+      color: #fff;
+      font-size: 1.1rem;
+      border: none;
+      height: 45px;
+    }
+    .btn-custom:hover {
+      background: #c82333;
+    }
+    .text-link {
+      color: #007bff;
+      cursor: pointer;
+    }
+    .text-link:hover {
+      text-decoration: underline;
+    }
+    .spinner-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="login-card">
+      <div class="spinner-overlay" id="spinnerOverlay">
+        <div class="spinner-border text-danger" role="status">
+          <span class="visually-hidden">লোডিং...</span>
+        </div>
+      </div>
+      <h2>লগইন করুন</h2>
+      <input type="email" id="loginEmail" class="form-control" placeholder="ইমেইল" />
+      <input type="password" id="loginPassword" class="form-control" placeholder="পাসওয়ার্ড" />
+      <button class="btn btn-custom w-100" id="loginBtn">লগইন</button>
+      <p class="mt-3">অ্যাকাউন্ট না থাকলে <a href="signup.html" class="text-link">সাইনআপ করুন</a></p>
+      <p class="mt-1"><a href="#" onclick="recoverPassword()" class="text-link">পাসওয়ার্ড রিকভার করুন</a></p>
+    </div>
+  </div>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAlCr-cphqHaAGN8SoDJ_aOnVBzJOyFLyo",
+      authDomain: "post-41a7c.firebaseapp.com",
+      projectId: "post-41a7c",
+      storageBucket: "post-41a7c.firebasestorage.app",
+      messagingSenderId: "266157241851",
+      appId: "1:266157241851:web:a36fe15cc1a46b01aac75e",
+      measurementId: "G-GQ1BKHFPMP"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const loginBtn = document.getElementById('loginBtn');
+    const spinnerOverlay = document.getElementById('spinnerOverlay');
+
+    loginBtn.addEventListener('click', () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      if (!email || !password) {
+        alert("ইমেইল ও পাসওয়ার্ড প্রদান করুন!");
+        return;
+      }
+      spinnerOverlay.style.display = 'flex';
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          alert("লগইন সফল হয়েছে!");
+          window.location.href = "index.html";
+        })
+        .catch(error => {
+          alert("লগইন ত্রুটি: " + error.message);
+        })
+        .finally(() => {
+          spinnerOverlay.style.display = 'none';
+        });
+    });
+
+    function recoverPassword() {
+      const email = document.getElementById('loginEmail').value.trim();
+      if (!email) {
+        alert("পাসওয়ার্ড রিকভার করতে প্রথমে ইমেইল প্রদান করুন!");
+        return;
+      }
+      spinnerOverlay.style.display = 'flex';
+      auth.sendPasswordResetEmail(email)
+        .then(() => {
+          alert(`রিকভার লিঙ্ক পাঠানো হয়েছে: ${email}`);
+        })
+        .catch(error => {
+          alert("রিকভার ত্রুটি: " + error.message);
+        })
+        .finally(() => {
+          spinnerOverlay.style.display = 'none';
+        });
+    }
+  </script>
+</body>
+</html>
