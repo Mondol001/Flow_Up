@@ -42,8 +42,8 @@
       margin-left: 5px;
       color: #6c757d;
     }
-    /* Search & Logout Icon Buttons */
-    #searchIconBtn, #logoutIconBtn {
+    /* Search & Icon Buttons */
+    #searchIconBtn, #profileIconBtn {
       background: none;
       border: none;
       color: #fff;
@@ -133,7 +133,6 @@
       display: inline-block;
     }
     .comment-section {
-      display: none;
       padding: 0.5rem 1rem;
       border-top: 1px solid #ced4da;
       background-color: #f1f3f5;
@@ -248,8 +247,9 @@
       <button id="searchIconBtn">
         <i class="bi bi-search"></i>
       </button>
-      <button id="logoutIconBtn" style="display:none;">
-        <i class="bi bi-box-arrow-right"></i>
+      <!-- প্রোফাইল আইকন, যা লগইন হওয়ার পর দেখানো হবে -->
+      <button id="profileIconBtn" style="display:none;">
+        <i class="bi bi-person-circle"></i>
       </button>
     </div>
   </nav>
@@ -258,7 +258,8 @@
   <div id="app-section" class="container mb-4" style="display:none;">
     <div class="action-container">
       <input type="text" id="searchBox" class="form-control search-box" placeholder="সার্চ করুন..." />
-      <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+      <!-- অ্যাড টাস্ক বাটন, এডমিনের জন্য দেখানো হবে -->
+      <button id="addTaskBtn" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#addTaskModal">
         <i class="bi bi-plus-circle-fill"></i> Add Task
       </button>
     </div>
@@ -366,6 +367,26 @@
     </div>
   </div>
 
+  <!-- Profile Modal -->
+  <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="profileModalLabel">প্রোফাইল</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="userNameDisplay">নাম: </p>
+          <p id="userEmailDisplay">ইমেইল: </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-modal" id="modalLogoutBtn">লগআউট</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বন্ধ করুন</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -387,11 +408,12 @@
     /* ================= Global Variables ================= */
     let tasks = [];
     let selectedTaskId = null;
-    // Auth mode: true for login, false for signup
-    let isLoginMode = true;
-    // Store logged in user's display name and role
+    let isLoginMode = true; // true for login, false for signup
     let currentUserName = '';
+    let currentUserEmail = '';
     let currentUserRole = 'user'; // Default role
+    // গ্লোবাল অবজেক্ট যেটা প্রতিটি টাস্কের কমেন্ট সেকশন ওপেন আছে কিনা তা ট্র্যাক করবে
+    let openComments = {};
 
     /* ================= DOM Elements ================= */
     const authSection = document.getElementById('auth-section');
@@ -405,7 +427,9 @@
     const taskContainer = document.getElementById('taskContainer');
     const searchBox = document.getElementById('searchBox');
     const searchIconBtn = document.getElementById('searchIconBtn');
-    const logoutIconBtn = document.getElementById('logoutIconBtn');
+    const profileIconBtn = document.getElementById('profileIconBtn');
+
+    const addTaskBtn = document.getElementById('addTaskBtn');
 
     // Add Task Modal Elements
     const newTaskNameEl = document.getElementById('newTaskName');
@@ -424,6 +448,12 @@
     // Delete Modal Elements
     const deleteTaskModal = new bootstrap.Modal(document.getElementById('deleteTaskModal'));
     const confirmDeleteTaskBtn = document.getElementById('confirmDeleteTaskBtn');
+
+    // Profile Modal Elements
+    const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const userEmailDisplay = document.getElementById('userEmailDisplay');
+    const modalLogoutBtn = document.getElementById('modalLogoutBtn');
 
     // Toast Container
     const toastContainer = document.getElementById('toastContainer');
@@ -470,7 +500,6 @@
     }
 
     /* ================= Firebase Authentication ================= */
-    // Toggle between Login and Signup mode
     function toggleAuthMode() {
       isLoginMode = !isLoginMode;
       if (isLoginMode) {
@@ -485,7 +514,6 @@
         authName.style.display = "block";
       }
     }
-    // Auth Button Click Handler
     authBtn.addEventListener('click', () => {
       const email = authEmail.value.trim();
       const password = authPassword.value.trim();
@@ -510,9 +538,7 @@
         auth.createUserWithEmailAndPassword(email, password)
           .then((userCredential) => {
             const user = userCredential.user;
-            // Firebase Auth প্রোফাইলে নাম আপডেট করুন
             return user.updateProfile({ displayName: name }).then(() => {
-              // Firestore-এ ডিফল্টভাবে role: "user" এবং নাম সংরক্ষণ করুন
               return db.collection("users").doc(user.uid).set({
                 name: name,
                 email: email,
@@ -529,22 +555,28 @@
       }
     });
 
-    // Listen for Auth State Changes
     auth.onAuthStateChanged(user => {
       if (user) {
-        // Firestore থেকে ইউজারের তথ্য নিয়ে currentUserName ও currentUserRole আপডেট করুন
         db.collection("users").doc(user.uid).get()
           .then(doc => {
             if (doc.exists) {
               const data = doc.data();
               currentUserName = user.displayName || data.name || "anonymous";
+              currentUserEmail = data.email || "";
               currentUserRole = data.role || "user";
               console.log("ইউজার তথ্য:", data);
             }
-            // Auth Section লুকিয়ে main app দেখান
             authSection.style.display = "none";
             appSection.style.display = "block";
-            logoutIconBtn.style.display = "inline-block";
+            // প্রোফাইল আইকন দেখান
+            profileIconBtn.style.display = "inline-block";
+            // এডমিন না হলে অ্যাড টাস্ক বাটন লুকিয়ে দিন
+            if (currentUserRole !== 'admin') {
+              addTaskBtn.style.display = "none";
+            }
+            // প্রোফাইল মডালে ইউজারের তথ্য দেখান
+            userNameDisplay.innerText = "নাম: " + currentUserName;
+            userEmailDisplay.innerText = "ইমেইল: " + currentUserEmail;
           })
           .catch(err => {
             console.error("তথ্য লোড করতে সমস্যা:", err);
@@ -552,7 +584,7 @@
       } else {
         authSection.style.display = "flex";
         appSection.style.display = "none";
-        logoutIconBtn.style.display = "none";
+        profileIconBtn.style.display = "none";
       }
     });
 
@@ -561,7 +593,15 @@
         console.log("লগআউট সফল");
       });
     }
-    logoutIconBtn.addEventListener('click', logout);
+    modalLogoutBtn.addEventListener('click', () => {
+      logout();
+      profileModal.hide();
+    });
+
+    // প্রোফাইল আইকন ক্লিক হলে প্রোফাইল মডাল দেখান
+    profileIconBtn.addEventListener('click', () => {
+      profileModal.show();
+    });
 
     /* ================= Role Based Access Check ================= */
     function requireAdmin(actionName) {
@@ -600,10 +640,8 @@
 
         let commentsHtml = '';
         if (task.comments && task.comments.length > 0) {
-          task.comments.sort((a, b) => {
-            if (!a.timestamp || !b.timestamp) return 0;
-            return a.timestamp.seconds - b.timestamp.seconds;
-          });
+          // নতুন কমেন্টগুলোকে উপরে দেখানোর জন্য ডেসেন্ডিং এ সজ্জিত করা হলো
+          task.comments.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
           task.comments.forEach(cmt => {
             commentsHtml += `
               <div class="comment">
@@ -614,6 +652,18 @@
             `;
           });
         }
+        // এডিট (থ্রি ডট) বাটন শুধু এডমিনদের জন্য দেখানো হবে
+        const editButtonHtml = currentUserRole === 'admin' ? `
+          <button class="dot-btn" onclick="openEditModal('${task.id}')">
+            <i class="bi bi-three-dots-vertical"></i>
+          </button>
+        ` : '';
+
+        // কমেন্ট সেকশনের ডিসপ্লে নির্ধারণ openComments অবজেক্ট অনুযায়ী
+        const isOpen = openComments[task.id] === true;
+        const commentSectionStyle = isOpen ? "block" : "none";
+        const toggleText = isOpen ? `<i class="bi bi-chat-left-text"></i> Show Less` : `<i class="bi bi-chat-left-text"></i> Show More`;
+
         const card = document.createElement('div');
         card.className = 'card shadow';
         card.innerHTML = `
@@ -622,9 +672,7 @@
               <h5 class="${taskNameClass} mb-0">${task.name}</h5>
               <small class="timestamp"><i class="bi bi-clock-history"></i> Created: ${createdAt}</small>
             </div>
-            <button class="dot-btn" onclick="openEditModal('${task.id}')">
-              <i class="bi bi-three-dots-vertical"></i>
-            </button>
+            ${editButtonHtml}
           </div>
           <div class="card-body">
             <div class="priority-line">
@@ -656,10 +704,10 @@
                 <small class="progress-timestamp"><i class="bi bi-clock"></i> Last Updated: ${progressUpdated}</small>
               </div>
             </div>
-            <a class="show-more" onclick="toggleCommentSection(this)">
-              <i class="bi bi-chat-left-text"></i> Show More
+            <a class="show-more" onclick="toggleCommentSection(this, '${task.id}')">
+              ${toggleText}
             </a>
-            <div class="comment-section">
+            <div class="comment-section" style="display: ${commentSectionStyle};">
               <div class="comment-list">${commentsHtml}</div>
               <div class="input-group mt-2">
                 <input type="text" class="form-control comment-input" placeholder="কমেন্ট লিখুন" />
@@ -673,6 +721,12 @@
       });
     }
     searchBox.addEventListener('input', renderTasks);
+
+    function toggleCommentSection(linkEl, taskId) {
+      // toggle the open state for this task id
+      openComments[taskId] = !openComments[taskId];
+      renderTasks();
+    }
 
     /* ================= Task CRUD Operations (Admin Only) ================= */
     saveNewTaskBtn.addEventListener('click', () => {
@@ -771,20 +825,8 @@
       deleteTaskModal.show();
     }
     window.openDeleteModal = openDeleteModal;
-    confirmDeleteTaskBtn.addEventListener('click', () => {
-      if (!requireAdmin("ডিলিট করতে")) return;
-      db.collection('tasks').doc(selectedTaskId).delete()
-        .then(() => {
-          showToast("টাস্ক ডিলিট হয়েছে!");
-          deleteTaskModal.hide();
-        })
-        .catch(err => {
-          console.error(err);
-          showToast("ডিলিট করতে সমস্যা হয়েছে!");
-        });
-    });
+    // সকল ইউজার এখন কমেন্ট করতে পারবেন
     function submitComment(taskId, btn) {
-      if (!requireAdmin("কমেন্ট যোগ করতে")) return;
       const inputGroup = btn.parentElement;
       const commentInput = inputGroup.querySelector('.comment-input');
       const commentText = commentInput.value.trim();
@@ -803,6 +845,9 @@
       .then(() => {
         showToast("কমেন্ট যোগ হয়েছে!");
         commentInput.value = '';
+        // নিশ্চিত করা হচ্ছে সংশ্লিষ্ট টাস্কের কমেন্ট সেকশন খোলা থাকবে
+        openComments[taskId] = true;
+        renderTasks();
       })
       .catch(err => {
         console.error(err);
@@ -810,23 +855,7 @@
       });
     }
     window.submitComment = submitComment;
-    function toggleCommentSection(linkEl) {
-      const commentSection = linkEl.nextElementSibling;
-      if (commentSection.style.display === "block") {
-        commentSection.style.display = "none";
-        linkEl.innerHTML = `<i class="bi bi-chat-left-text"></i> Show More`;
-      } else {
-        commentSection.style.display = "block";
-        linkEl.innerHTML = `<i class="bi bi-chat-left-text"></i> Show Less`;
-      }
-    }
-    window.toggleCommentSection = toggleCommentSection;
-    searchIconBtn.addEventListener('click', () => {
-      searchBox.classList.toggle('active');
-      if (searchBox.classList.contains('active')) {
-        searchBox.focus();
-      }
-    });
+
     /* ================= Initialize Data Load ================= */
     loadTasks();
   </script>
